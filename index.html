@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Persistence Module Diagram Chaser</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">Persistence Module Diagram Chaser</div>
+    <div class="toolbar" role="toolbar" aria-label="Editing tools">
+      <div class="seg" role="group" aria-label="Mode">
+        <button id="modeSelect" class="seg-btn active" title="Select and move (V)">Move</button>
+        <button id="modeArrow" class="seg-btn" title="Draw arrows by dragging between modules (A, or Shift-drag)">Arrow</button>
+      </div>
+      <button id="undoBtn" title="Undo (⌘Z)">Undo</button>
+      <button id="redoBtn" title="Redo (⇧⌘Z)">Redo</button>
+      <span class="sep"></span>
+      <label class="select-wrap">Example
+        <select id="exampleSelect"><option value="">Load…</option></select>
+      </label>
+      <button id="newBtn">New</button>
+      <button id="exportBtn" title="Download the diagram as JSON">Save</button>
+      <label class="file-btn" title="Open a diagram JSON file">Open<input id="importInput" type="file" accept=".json,application/json" hidden></label>
+      <button id="helpBtn" aria-expanded="false">Help</button>
+      <a class="toplink" href="https://github.com/primozskraba/diagram-chaser" target="_blank" rel="noopener" title="Source code and instructions to run it locally">Source</a>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="canvas-wrap" id="canvasWrap" aria-label="Diagram canvas">
+      <svg id="canvas" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Commutative diagram"></svg>
+      <div class="canvas-hint" id="canvasHint">Double-click the grid to add a module · Shift-drag (or Arrow mode) between modules to add a map</div>
+    </section>
+
+    <aside class="sidebar">
+      <section class="panel" id="helpPanel" hidden>
+        <h2>How it works</h2>
+        <ul class="help">
+          <li><b>Modules</b>: double-click an empty grid cell. Drag to move. Kinds: general, free, 0. All modules are finitely generated k[t]-modules.</li>
+          <li><b>Maps</b>: Shift-drag from one module to another (or switch to Arrow mode). Set injective ↪, surjective ↠, isomorphism ≅ (both), zero, <i>identity =</i> (double line: the two modules are the same module and the map is its identity — stronger than ≅, which is just some invertible map), or <i>induced ∃!</i> (dashed: a map to be constructed from the rest of the diagram, by factoring through an injective/surjective map or along a zigzag of maps and preimages, like the snake lemma's connecting map).</li>
+          <li><b>ker / im / coker</b>: select a map and add its kernel, image or cokernel. They come with their universal maps (ι, e/m, π) and exactness.</li>
+          <li><b>Exactness &amp; squares</b>: Shift-click several maps. A composable chain can be marked exact (every inner spot) or turned into a new map equal to its composite ("Add composite", e.g. g∘f); four maps forming a square can be marked pullback or pushout.</li>
+          <li><b>Commutativity</b>: every diagram is assumed to commute (all parallel composites of solid maps agree).</li>
+          <li><b>Queries</b> run an element-wise diagram chase. A proof is shown in words and as a Lean 4 / Mathlib theorem. If the chase saturates without a proof, the saturated state is a finite-dimensional counterexample (over ℚ, with t acting as 0).</li>
+        </ul>
+        <h2 id="runLocally">Run it locally</h2>
+        <p class="small">Everything runs in your browser; only checking proofs with your own Lean needs the small bundled server. Python 3 is enough to run the app; Lean is optional.</p>
+        <ol class="help small">
+          <li>Get the code: <code>git clone https://github.com/primozskraba/diagram-chaser</code> (or download it as a ZIP from GitHub), then <code>cd diagram-chaser</code>.</li>
+          <li>Start it: <code>python3 server.py</code> and open <code>http://127.0.0.1:8765</code>.</li>
+          <li>For proof checking, install Lean with <a href="https://lean-lang.org/install/" target="_blank" rel="noopener">elan</a> and, inside <code>diagram-chaser</code>, make a Mathlib project once:
+            <code>lake +leanprover-community/mathlib4:lean-toolchain new lean-project math</code>, then <code>cd lean-project &amp;&amp; lake exe cache get &amp;&amp; cd ..</code>. (An existing Mathlib project works too: <code>python3 server.py --lean-project PATH</code>.)</li>
+          <li>Restart <code>python3 server.py</code>: it finds <code>lean-project</code>, and “Check with local Lean” and “verify with Lean” are enabled.</li>
+          <li>To check a downloaded proof by hand: <code>cd lean-project &amp;&amp; lake env lean ~/Downloads/DiagramChase.lean</code> (no errors means Lean accepted it).</li>
+        </ol>
+        <p class="small muted">If the browser saves the download with another name or extension (e.g. <code>DiagramChase.lean.txt</code>), rename it or pass that name to <code>lake env lean</code>; the file is plain text, and “Copy Lean” works too.</p>
+      </section>
+
+      <section class="panel" id="inspector" aria-live="polite"></section>
+
+      <section class="panel" id="hypPanel">
+        <h2>Hypotheses</h2>
+        <div id="hypList"></div>
+      </section>
+
+      <section class="panel" id="queryPanel">
+        <h2>Query</h2>
+        <div id="queryForm"></div>
+        <div class="row gap">
+          <button id="runBtn" class="primary">Chase</button>
+          <label class="check"><input type="checkbox" id="autoLean"> verify with Lean</label>
+        </div>
+      </section>
+
+      <section class="panel" id="resultPanel" hidden>
+        <div id="result"></div>
+      </section>
+    </aside>
+  </main>
+
+  <script type="module" src="js/ui.js"></script>
+</body>
+</html>
